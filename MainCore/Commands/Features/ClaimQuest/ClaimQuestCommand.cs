@@ -4,6 +4,9 @@ namespace MainCore.Commands.Features.ClaimQuest
 {
     public class ClaimQuestCommand : QuestCommand
     {
+        private readonly DelayClickCommand delayClickCommand = new();
+        private readonly SwitchTabCommand switchTabCommand = new();
+
         public async Task<Result> Execute(AccountId accountId, IChromeBrowser chromeBrowser, CancellationToken cancellationToken)
         {
             HtmlDocument html;
@@ -23,18 +26,18 @@ namespace MainCore.Commands.Features.ClaimQuest
 
                 result = await chromeBrowser.Click(By.XPath(quest.XPath), cancellationToken);
                 if (result.IsFailed) return result.WithError(TraceMessage.Error(TraceMessage.Line()));
-                await new DelayClickCommand().Execute(accountId);
+                await delayClickCommand.Execute(accountId);
             }
             while (IsQuestClaimable(html));
             return Result.Ok();
         }
 
-        private static async Task<Result> ClaimAccountQuest(AccountId accountId, IChromeBrowser chromeBrowser, CancellationToken cancellationToken)
+        private async Task<Result> ClaimAccountQuest(AccountId accountId, IChromeBrowser chromeBrowser, CancellationToken cancellationToken)
         {
             Result result;
-            result = await new SwitchTabCommand().Execute(chromeBrowser, 1, cancellationToken);
+            result = await switchTabCommand.Execute(chromeBrowser, 1, cancellationToken);
             if (result.IsFailed) return result.WithError(TraceMessage.Error(TraceMessage.Line()));
-            await new DelayClickCommand().Execute(accountId);
+            await delayClickCommand.Execute(accountId);
 
             var quest = GetQuestCollectButton(chromeBrowser.Html);
 

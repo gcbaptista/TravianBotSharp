@@ -11,7 +11,7 @@ namespace MainCore.Commands.Features.ClaimQuest
             var adventure = GetQuestMaster(html);
             if (adventure is null) return Retry.ButtonNotFound("quest master");
 
-            bool tableShow(IWebDriver driver)
+            static bool tableShow(IWebDriver driver)
             {
                 var doc = new HtmlDocument();
                 doc.LoadHtml(driver.PageSource);
