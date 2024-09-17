@@ -13,6 +13,9 @@ namespace MainCore.Commands.UI.Build
         private readonly ITaskManager _taskManager;
         private readonly IValidator<NormalBuildInput> _normalBuildInputValidator;
 
+        private readonly GetBuildings _getBuildings = new();
+        private readonly AddJobCommand _addJobCommand = new();
+
         public BuildNormalCommand(IDialogService dialogService = null, IMediator mediator = null, ITaskManager taskManager = null, IValidator<NormalBuildInput> normalBuildInputValidator = null)
         {
             _dialogService = dialogService ?? Locator.Current.GetService<IDialogService>();
@@ -49,7 +52,7 @@ namespace MainCore.Commands.UI.Build
 
         private async Task NormalBuild(AccountId accountId, VillageId villageId, NormalBuildPlan plan)
         {
-            var buildings = new GetBuildings().Execute(villageId);
+            var buildings = _getBuildings.Execute(villageId);
 
             var building = buildings.Find(x => x.Location == plan.Location);
 
@@ -64,7 +67,7 @@ namespace MainCore.Commands.UI.Build
                 Validate(buildings, plan);
             }
 
-            new AddJobCommand().ToBottom(villageId, plan);
+            _addJobCommand.ToBottom(villageId, plan);
             await _mediator.Publish(new JobUpdated(accountId, villageId));
         }
 

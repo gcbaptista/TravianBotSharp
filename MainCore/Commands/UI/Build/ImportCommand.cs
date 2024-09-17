@@ -9,6 +9,8 @@ namespace MainCore.Commands.UI.Build
         private readonly IDialogService _dialogService;
         private readonly IMediator _mediator;
 
+        private readonly GetBuildings _getBuildings = new();
+
         public ImportCommand(IDbContextFactory<AppDbContext> contextFactory = null, IDialogService dialogService = null, IMediator mediator = null)
         {
             _contextFactory = contextFactory ?? Locator.Current.GetService<IDbContextFactory<AppDbContext>>();
@@ -59,9 +61,9 @@ namespace MainCore.Commands.UI.Build
             _dialogService.ShowMessageBox("Information", "Jobs imported");
         }
 
-        private static IEnumerable<JobDto> GetModifiedJobs(VillageId villageId, List<JobDto> jobs)
+        private IEnumerable<JobDto> GetModifiedJobs(VillageId villageId, List<JobDto> jobs)
         {
-            var buildings = new GetBuildings().Execute(villageId);
+            var buildings = _getBuildings.Execute(villageId);
 
             var changedLocations = new Dictionary<int, int>();
             foreach (var job in jobs)

@@ -5,6 +5,8 @@
         private readonly IDbContextFactory<AppDbContext> _contextFactory;
         private readonly ILogService _logService;
 
+        private readonly GetSetting _getSetting = new();
+
         public GetAccess(IDbContextFactory<AppDbContext> contextFactory = null, ILogService logService = null)
         {
             _contextFactory = contextFactory ?? Locator.Current.GetService<IDbContextFactory<AppDbContext>>();
@@ -25,7 +27,7 @@
             if (accesses.Count == 1) return access;
             if (ignoreSleepTime) return access;
 
-            var minSleep = new GetSetting().ByName(accountId, AccountSettingEnums.SleepTimeMin);
+            var minSleep = _getSetting.ByName(accountId, AccountSettingEnums.SleepTimeMin);
 
             var timeValid = DateTime.Now.AddMinutes(-minSleep);
             if (access.LastUsed > timeValid) return Stop.LackOfAccess;
