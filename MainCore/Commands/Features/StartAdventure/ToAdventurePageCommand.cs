@@ -11,7 +11,7 @@ namespace MainCore.Commands.Features.StartAdventure
             var adventure = GetHeroAdventure(html);
             if (adventure is null) return Retry.ButtonNotFound("hero adventure");
 
-            bool tableShow(IWebDriver driver)
+            static bool tableShow(IWebDriver driver)
             {
                 var doc = new HtmlDocument();
                 doc.LoadHtml(driver.PageSource);

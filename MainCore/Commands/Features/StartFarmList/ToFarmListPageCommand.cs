@@ -6,6 +6,12 @@ namespace MainCore.Commands.Features.StartFarmList
     {
         private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
+        private readonly SwitchVillageCommand _switchVillageCommand = new();
+        private readonly ToDorfCommand _toDorfCommand = new();
+        private readonly UpdateBuildingCommand _updateBuildingCommand = new();
+        private readonly ToBuildingCommand _toBuildingCommand = new();
+        private readonly SwitchTabCommand _switchTabCommand = new();
+
         public ToFarmListPageCommand(IDbContextFactory<AppDbContext> contextFactory = null)
         {
             _contextFactory = contextFactory ?? Locator.Current.GetService<IDbContextFactory<AppDbContext>>();
@@ -26,21 +32,19 @@ namespace MainCore.Commands.Features.StartFarmList
             var rallypointVillageId = GetVillageHasRallypoint(accountId);
             if (rallypointVillageId == VillageId.Empty) return Skip.NoRallypoint;
 
-            result = await new SwitchVillageCommand().Execute(chromeBrowser, rallypointVillageId, cancellationToken);
+            result = await _switchVillageCommand.Execute(chromeBrowser, rallypointVillageId, cancellationToken);
             if (result.IsFailed) return result.WithError(TraceMessage.Error(TraceMessage.Line()));
 
-            result = await new ToDorfCommand().Execute(chromeBrowser, 2, false, cancellationToken);
+            result = await _toDorfCommand.Execute(chromeBrowser, 2, false, cancellationToken);
             if (result.IsFailed) return result.WithError(TraceMessage.Error(TraceMessage.Line()));
 
-            await new UpdateBuildingCommand().Execute(chromeBrowser, accountId, rallypointVillageId, cancellationToken);
+            await _updateBuildingCommand.Execute(chromeBrowser, accountId, rallypointVillageId, cancellationToken);
 
-            result = await new ToBuildingCommand().Execute(chromeBrowser, 39, cancellationToken);
+            result = await _toBuildingCommand.Execute(chromeBrowser, 39, cancellationToken);
             if (result.IsFailed) return result.WithError(TraceMessage.Error(TraceMessage.Line()));
 
-            result = await new SwitchTabCommand().Execute(chromeBrowser, 4, cancellationToken);
+            result = await _switchTabCommand.Execute(chromeBrowser, 4, cancellationToken);
             if (result.IsFailed) return result.WithError(TraceMessage.Error(TraceMessage.Line()));
-
-            await new DelayClickCommand().Execute(accountId);
             return Result.Ok();
         }
 

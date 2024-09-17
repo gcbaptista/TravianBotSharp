@@ -5,6 +5,7 @@ namespace MainCore.Commands.Features.StartFarmList
     public class StartActiveFarmListCommand : FarmListCommand
     {
         private readonly IDbContextFactory<AppDbContext> _contextFactory;
+        private readonly DelayClickCommand _delayClickCommand = new();
 
         public StartActiveFarmListCommand(IDbContextFactory<AppDbContext> contextFactory = null)
         {
@@ -15,8 +16,6 @@ namespace MainCore.Commands.Features.StartFarmList
         {
             var farmLists = GetActive(accountId);
             if (farmLists.Count == 0) return Skip.NoActiveFarmlist;
-
-            var delayClickCommand = new DelayClickCommand();
 
             var html = chromeBrowser.Html;
             Result result;
@@ -29,7 +28,7 @@ namespace MainCore.Commands.Features.StartFarmList
                 result = await chromeBrowser.Click(By.XPath(startButton.XPath), CancellationToken.None);
                 if (result.IsFailed) return result.WithError(TraceMessage.Error(TraceMessage.Line()));
 
-                await delayClickCommand.Execute(accountId);
+                await _delayClickCommand.Execute(accountId);
             }
 
             return Result.Ok();

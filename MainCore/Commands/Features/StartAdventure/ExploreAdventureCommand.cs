@@ -22,7 +22,7 @@ namespace MainCore.Commands.Features.StartAdventure
 
             var logger = _logService.GetLogger(accountId);
             logger.Information("Start adventure {Adventure}", GetAdventureInfo(adventure));
-            bool continueShow(IWebDriver driver)
+            static bool continueShow(IWebDriver driver)
             {
                 var doc = new HtmlDocument();
                 doc.LoadHtml(driver.PageSource);
