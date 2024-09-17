@@ -9,6 +9,11 @@ namespace MainCore.Commands.Features.UpgradeBuilding
         private readonly IDbContextFactory<AppDbContext> _contextFactory;
         private readonly ILogService _logService;
 
+        private readonly IsPlusActive _isPlusActive = new();
+        private readonly GetSetting _getSetting = new();
+        private readonly ToDorfCommand _toDorfCommand = new();
+        private readonly UpdateBuildingCommand _updateBuildingCommand = new();
+
         public GetJobCommand(IDbContextFactory<AppDbContext> contextFactory = null, ILogService logService = null)
         {
             _contextFactory = contextFactory ?? Locator.Current.GetService<IDbContextFactory<AppDbContext>>();
@@ -23,8 +28,8 @@ namespace MainCore.Commands.Features.UpgradeBuilding
             var countQueueBuilding = CountQueueBuilding(villageId);
             if (countQueueBuilding == 0) return await GetBuildingJob(chromeBrowser, accountId, villageId, false, cancellationToken);
 
-            var plusActive = new IsPlusActive().Execute(accountId);
-            var applyRomanQueueLogic = new GetSetting().BooleanByName(villageId, VillageSettingEnums.ApplyRomanQueueLogicWhenBuilding);
+            var plusActive = _isPlusActive.Execute(accountId);
+            var applyRomanQueueLogic = _getSetting.BooleanByName(villageId, VillageSettingEnums.ApplyRomanQueueLogicWhenBuilding);
 
             if (countQueueBuilding == 1)
             {
@@ -57,10 +62,10 @@ namespace MainCore.Commands.Features.UpgradeBuilding
             if (valid.IsFailed)
             {
                 Result result;
-                result = await new ToDorfCommand().Execute(chromeBrowser, 2, true, cancellationToken);
+                result = await _toDorfCommand.Execute(chromeBrowser, 2, true, cancellationToken);
                 if (result.IsFailed) return result.WithError(TraceMessage.Error(TraceMessage.Line()));
 
-                await new UpdateBuildingCommand().Execute(chromeBrowser, accountId, villageId, cancellationToken);
+                await _updateBuildingCommand.Execute(chromeBrowser, accountId, villageId, cancellationToken);
 
                 valid = IsJobValid(villageId, plan);
 
@@ -76,15 +81,10 @@ namespace MainCore.Commands.Features.UpgradeBuilding
                     {
                         if (error is PrerequisiteBuildingMissing bqError)
                         {
-#pragma warning disable S6966 // Awaitable method should be used
-                            if (!isProgressing && context.QueueBuildings
-                                .Where(x => x.VillageId == villageId.Value)
-                                .Where(x => x.Type == bqError.PrerequisiteBuilding)
-                                .Any(x => x.Level >= bqError.Level))
+                            if (!isProgressing && IsPrerequisiteProgressing(villageId, context, bqError))
                             {
                                 isProgressing = true;
                             }
-#pragma warning restore S6966 // Awaitable method should be used
                             logger.Warning("{Message}", bqError.Message);
                         }
                     }
@@ -95,6 +95,14 @@ namespace MainCore.Commands.Features.UpgradeBuilding
                 }
             }
             return job;
+        }
+
+        private static bool IsPrerequisiteProgressing(VillageId villageId, AppDbContext context, PrerequisiteBuildingMissing bqError)
+        {
+            return context.QueueBuildings
+                .Where(x => x.VillageId == villageId.Value)
+                .Where(x => x.Type == bqError.PrerequisiteBuilding)
+                .Any(x => x.Level >= bqError.Level);
         }
 
         private JobDto GetBuildingJob(VillageId villageId)

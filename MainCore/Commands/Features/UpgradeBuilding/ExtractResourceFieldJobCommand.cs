@@ -7,6 +7,9 @@ namespace MainCore.Commands.Features.UpgradeBuilding
     {
         private readonly IMediator _mediator;
 
+        private readonly DeleteJobCommand _deleteJobCommand = new();
+        private readonly AddJobCommand _addJobCommand = new();
+
         public ExtractResourceFieldJobCommand(IMediator mediator = null)
         {
             _mediator = mediator ?? Locator.Current.GetService<IMediator>();
@@ -19,11 +22,11 @@ namespace MainCore.Commands.Features.UpgradeBuilding
             var normalBuildPlan = GetNormalBuildPlan(villageId, resourceBuildPlan);
             if (normalBuildPlan is null)
             {
-                new DeleteJobCommand().ByJobId(job.Id);
+                _deleteJobCommand.ByJobId(job.Id);
             }
             else
             {
-                new AddJobCommand().ToTop(villageId, normalBuildPlan);
+                _addJobCommand.ToTop(villageId, normalBuildPlan);
             }
             await _mediator.Publish(new JobUpdated(accountId, villageId), cancellationToken);
             return Result.Ok();

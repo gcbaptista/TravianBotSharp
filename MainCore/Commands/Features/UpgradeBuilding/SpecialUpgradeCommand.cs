@@ -2,6 +2,8 @@
 {
     public class SpecialUpgradeCommand
     {
+        private readonly DelayClickCommand _delayClickCommand = new();
+
         public async Task<Result> Execute(IChromeBrowser chromeBrowser, AccountId accountId, CancellationToken cancellationToken)
         {
             var html = chromeBrowser.Html;
@@ -39,7 +41,7 @@
                 result = await chromeBrowser.Click(By.XPath(checkbox.XPath), cancellationToken);
                 if (result.IsFailed) return result.WithError(TraceMessage.Error(TraceMessage.Line()));
 
-                await new DelayClickCommand().Execute(accountId);
+                await _delayClickCommand.Execute(accountId);
 
                 var watchButton = videoFeature.Descendants("button").FirstOrDefault(x => x.HasClass("green"));
                 if (watchButton is null) return Retry.ButtonNotFound("Watch ads");
@@ -92,7 +94,7 @@
                 result = await chromeBrowser.Click(By.XPath(dontShowThisAgain.XPath), cancellationToken);
                 if (result.IsFailed) return result.WithError(TraceMessage.Error(TraceMessage.Line()));
 
-                await new DelayClickCommand().Execute(accountId);
+                await _delayClickCommand.Execute(accountId);
 
                 var okButton = html.DocumentNode.Descendants("button").FirstOrDefault(x => x.HasClass("dialogButtonOk"));
                 if (okButton is null) return Retry.ButtonNotFound("ok");
