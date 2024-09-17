@@ -98,6 +98,9 @@ namespace MainCore.Tasks
 
                     if (IsUseHeroResource())
                     {
+                        result = await new ToHeroInventoryCommand().Execute(AccountId, _chromeBrowser, CancellationToken);
+                        if (result.IsFailed) return result.WithError(TraceMessage.Error(TraceMessage.Line()));
+
                         var missingResource = GetMissingResource(VillageId, requiredResource);
                         var heroResourceResult = await new UseHeroResourceCommand().Execute(AccountId, _chromeBrowser, missingResource, CancellationToken);
                         if (heroResourceResult.IsFailed)

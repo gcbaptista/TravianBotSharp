@@ -5,6 +5,7 @@ namespace MainCore.Commands.Features.UseHeroItem
     public class UseHeroResourceCommand
     {
         private readonly IDbContextFactory<AppDbContext> _contextFactory;
+        private readonly DelayClickCommand _delayClickCommand = new();
 
         public UseHeroResourceCommand(IDbContextFactory<AppDbContext> contextFactory = null)
         {
@@ -15,8 +16,6 @@ namespace MainCore.Commands.Features.UseHeroItem
         {
             var currentUrl = chromeBrowser.CurrentUrl;
             Result result;
-            result = await new ToHeroInventoryCommand().Execute(accountId, chromeBrowser, cancellationToken);
-            if (result.IsFailed) return result.WithError(TraceMessage.Error(TraceMessage.Line()));
 
             for (var i = 0; i < 4; i++)
             {
@@ -60,30 +59,28 @@ namespace MainCore.Commands.Features.UseHeroItem
             result = await ClickItem(chromeBrowser, item, cancellationToken);
             if (result.IsFailed) return result.WithError(TraceMessage.Error(TraceMessage.Line()));
 
-            var delayClickCommand = new DelayClickCommand();
-
-            await delayClickCommand.Execute(accountId);
+            await _delayClickCommand.Execute(accountId);
 
             result = await EnterAmount(chromeBrowser, amount);
             if (result.IsFailed) return result.WithError(TraceMessage.Error(TraceMessage.Line()));
 
-            await delayClickCommand.Execute(accountId);
+            await _delayClickCommand.Execute(accountId);
 
             result = await Confirm(chromeBrowser, cancellationToken);
             if (result.IsFailed) return result.WithError(TraceMessage.Error(TraceMessage.Line()));
 
-            await delayClickCommand.Execute(accountId);
+            await _delayClickCommand.Execute(accountId);
 
             return Result.Ok();
         }
 
-        private async Task<Result> ClickItem(IChromeBrowser chromeBrowser, HeroItemEnums item, CancellationToken cancellationToken)
+        private static async Task<Result> ClickItem(IChromeBrowser chromeBrowser, HeroItemEnums item, CancellationToken cancellationToken)
         {
             var html = chromeBrowser.Html;
             var node = GetItemSlot(html, item);
             if (node is null) return Retry.NotFound($"{item}", "item");
 
-            bool loadingCompleted(IWebDriver driver)
+            static bool loadingCompleted(IWebDriver driver)
             {
                 var doc = new HtmlDocument();
                 doc.LoadHtml(driver.PageSource);
@@ -108,13 +105,13 @@ namespace MainCore.Commands.Features.UseHeroItem
             return Result.Ok();
         }
 
-        private async Task<Result> Confirm(IChromeBrowser chromeBrowser, CancellationToken cancellationToken)
+        private static async Task<Result> Confirm(IChromeBrowser chromeBrowser, CancellationToken cancellationToken)
         {
             var html = chromeBrowser.Html;
             var node = GetConfirmButton(html);
             if (node is null) return Retry.ButtonNotFound("confirm use resource");
 
-            bool loadingCompleted(IWebDriver driver)
+            static bool loadingCompleted(IWebDriver driver)
             {
                 var doc = new HtmlDocument();
                 doc.LoadHtml(driver.PageSource);

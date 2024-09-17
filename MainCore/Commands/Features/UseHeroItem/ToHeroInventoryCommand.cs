@@ -27,7 +27,7 @@
             var avatar = GetHeroAvatar(html);
             if (avatar is null) return Retry.ButtonNotFound("avatar hero");
 
-            bool tabActived(IWebDriver driver)
+            static bool tabActived(IWebDriver driver)
             {
                 var doc = new HtmlDocument();
                 doc.LoadHtml(driver.PageSource);
