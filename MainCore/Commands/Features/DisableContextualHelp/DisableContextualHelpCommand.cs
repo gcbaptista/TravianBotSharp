@@ -12,6 +12,7 @@
             if (result.IsFailed) return result.WithError(TraceMessage.Error(TraceMessage.Line()));
 
             var button = GetSubmitButton(html);
+            if (button is null) return Retry.NotFound("submit button", "button");
             result = await chromeBrowser.Click(By.XPath(button.XPath), cancellationToken);
             if (result.IsFailed) return result.WithError(TraceMessage.Error(TraceMessage.Line()));
 
